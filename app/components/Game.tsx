@@ -74,14 +74,32 @@ const DirectionButton = ({ direction, onClick }: DirectionButtonProps) => (
   </button>
 );
 
+interface AISuggestion {
+  move: Direction;
+  reasoning: string;
+}
+
 export default function Game() {
   const [board, setBoard] = useState<Board>([]);
   const [gameStatus, setGameStatus] = useState<GameStatus>('playing');
+  const [apiKey, setApiKey] = useState<string>('');
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null);
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const [aiError, setAiError] = useState<string>('');
+
+  // Load API key from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('openai_api_key');
+    if (stored) setApiKey(stored);
+  }, []);
 
   // Initialize or restart the game
   const initGame = useCallback(() => {
     setBoard(initializeBoard());
     setGameStatus('playing');
+    setAiSuggestion(null);
+    setAiError('');
   }, []);
 
   useEffect(() => {
@@ -151,6 +169,50 @@ export default function Game() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleMove]);
+
+  // Get AI move suggestion
+  const getAISuggestion = async () => {
+    if (gameStatus !== 'playing') return;
+    if (board.length === 0) return;
+
+    setIsLoadingAI(true);
+    setAiError('');
+    setAiSuggestion(null);
+
+    try {
+      const response = await fetch('/api/suggest-move', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          board,
+          apiKey: apiKey || undefined  // Send user's API key if available
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 400) {
+          // API key issue - prompt user to enter key
+          setShowApiKeyInput(true);
+        }
+        throw new Error(data.error || 'Failed to get suggestion');
+      }
+
+      setAiSuggestion(data);
+    } catch (error: any) {
+      setAiError(error.message || 'Failed to get AI suggestion');
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
+
+  // Save API key to localStorage
+  const saveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('openai_api_key', key);
+    setShowApiKeyInput(false);
+  };
 
   // Get color for tile based on value
   const getTileColor = (value: number | null): string => {
@@ -237,6 +299,44 @@ export default function Game() {
           </div>
         </div>
 
+        {/* AI Suggestion Section */}
+        <div className="flex flex-col items-center gap-4 mt-4">
+          <button
+            onClick={getAISuggestion}
+            disabled={isLoadingAI || gameStatus !== 'playing'}
+            className="px-8 py-3 bg-[#9B59B6] text-white font-black text-lg rounded-xl border-4 border-black hover:bg-[#B67BCE] transition-all duration-200 active:scale-95 uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isLoadingAI ? (
+              <>
+                <span className="animate-spin">⚙️</span>
+                Thinking...
+              </>
+            ) : (
+              <>🤖 Get AI Suggestion</>
+            )}
+          </button>
+
+          {aiSuggestion && (
+            <div className="relative">
+              <div className="absolute -inset-2 bg-black rotate-1 rounded-xl"></div>
+              <div className="relative bg-[#9B59B6] p-4 rounded-xl border-4 border-black text-white max-w-sm">
+                <p className="font-black text-xl mb-2">
+                  Suggested Move: <span className="text-[#FFD93D]">{aiSuggestion.move.toUpperCase()}</span>
+                </p>
+                <p className="text-sm font-mono">
+                  {aiSuggestion.reasoning}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {aiError && (
+            <div className="bg-[#E74C3C] p-3 rounded-xl border-4 border-black text-white max-w-sm">
+              <p className="font-black text-sm">❌ {aiError}</p>
+            </div>
+          )}
+        </div>
+
         {/* Restart Button */}
         <button
           onClick={initGame}
@@ -245,6 +345,70 @@ export default function Game() {
           New Game
         </button>
       </div>
+
+      {/* API Key Input Modal */}
+      {showApiKeyInput && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="relative">
+            <div className="absolute -inset-3 bg-black rotate-2 rounded-2xl"></div>
+            <div className="absolute -inset-2 bg-[#9B59B6] -rotate-1 rounded-2xl"></div>
+
+            <div className="relative bg-white p-8 rounded-2xl border-8 border-black max-w-md">
+              <h3 className="text-3xl font-black mb-4 relative">
+                <span className="absolute -inset-2 bg-[#FFD93D] -rotate-1 -z-10 rounded-xl"></span>
+                <span className="relative">OpenAI API Key</span>
+              </h3>
+
+              <p className="text-sm font-mono mb-4 text-gray-700">
+                To use AI suggestions, you need an OpenAI API key.
+              </p>
+
+              <div className="bg-yellow-50 border-4 border-yellow-400 p-3 rounded-lg mb-4">
+                <p className="text-xs font-mono text-yellow-800">
+                  ⚠️ Your key will be stored in your browser and sent directly to OpenAI. Never share your API key!
+                </p>
+              </div>
+
+              <ol className="text-sm font-mono mb-4 space-y-2 text-gray-700">
+                <li>1. Go to <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#4ECDC4] font-bold underline">platform.openai.com/api-keys</a></li>
+                <li>2. Create a new API key</li>
+                <li>3. Paste it below:</li>
+              </ol>
+
+              <input
+                type="password"
+                placeholder="sk-..."
+                className="w-full p-3 border-4 border-black rounded-xl font-mono mb-4"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    saveApiKey(e.currentTarget.value);
+                  }
+                }}
+              />
+
+              <div className="flex gap-3">
+                <button
+                  onClick={(e) => {
+                    const input = e.currentTarget.parentElement?.previousElementSibling as HTMLInputElement;
+                    if (input?.value) {
+                      saveApiKey(input.value);
+                    }
+                  }}
+                  className="flex-1 px-6 py-3 bg-[#9B59B6] text-white font-black rounded-xl border-4 border-black hover:bg-[#B67BCE] transition-all duration-200 active:scale-95"
+                >
+                  Save Key
+                </button>
+                <button
+                  onClick={() => setShowApiKeyInput(false)}
+                  className="px-6 py-3 bg-gray-300 text-black font-black rounded-xl border-4 border-black hover:bg-gray-400 transition-all duration-200 active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Game Over Banner */}
       {gameStatus !== 'playing' && (
