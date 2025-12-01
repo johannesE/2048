@@ -246,23 +246,23 @@ export default function Game() {
         </button>
       </div>
 
-      {/* Game Over Overlay */}
+      {/* Game Over Banner */}
       {gameStatus !== 'playing' && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 z-50 animate-slide-down">
           <div className="relative">
             {/* Background layers for brutalist effect */}
-            <div className="absolute -inset-4 bg-black rotate-2 rounded-3xl"></div>
-            <div className="absolute -inset-3 bg-[#4ECDC4] -rotate-1 rounded-3xl"></div>
+            <div className="absolute -inset-3 bg-black rotate-2 rounded-2xl"></div>
+            <div className="absolute -inset-2 bg-[#4ECDC4] -rotate-1 rounded-2xl"></div>
 
-            <div className="relative bg-white p-12 rounded-3xl border-8 border-black text-center">
-              <h2 className="text-6xl font-black mb-6 relative">
+            <div className="relative bg-white px-12 py-8 rounded-2xl border-8 border-black text-center shadow-2xl">
+              <h2 className="text-5xl font-black mb-4 relative">
                 <span className="absolute -inset-2 bg-[#FDC500] -rotate-1 -z-10 rounded-xl"></span>
                 <span className="relative">
                   {gameStatus === 'won' ? 'You Win!' : 'Game Over'}
                 </span>
               </h2>
 
-              <p className="text-2xl font-mono mb-8 text-gray-700">
+              <p className="text-xl font-mono mb-6 text-gray-700">
                 {gameStatus === 'won'
                   ? '🎉 You reached 2048!'
                   : '😔 No more moves available'}
@@ -270,7 +270,7 @@ export default function Game() {
 
               <button
                 onClick={initGame}
-                className="px-10 py-4 bg-black text-white font-black text-xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95 uppercase tracking-wider"
+                className="px-8 py-3 bg-black text-white font-black text-lg rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95 uppercase tracking-wider"
               >
                 Play Again
               </button>
@@ -297,6 +297,21 @@ export default function Game() {
 
         .animate-tile-appear {
           animation: tile-appear 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slide-down {
+          0% {
+            transform: translateX(-50%) translateY(-150%);
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
       `}</style>
     </div>
