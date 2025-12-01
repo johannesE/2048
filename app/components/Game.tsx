@@ -10,6 +10,21 @@ export type Direction = 'left' | 'right' | 'up' | 'down';
 export const BOARD_ROWS = 4;
 export const BOARD_COLS = 4;
 
+// Tile color mapping
+const TILE_COLORS: Record<number, string> = {
+  2: 'bg-[#FF6B35] border-[#FF8C42]',
+  4: 'bg-[#F7931E] border-[#FFB142]',
+  8: 'bg-[#FDC500] border-[#FFD93D]',
+  16: 'bg-[#6BCF7F] border-[#8FE3A0]',
+  32: 'bg-[#4ECDC4] border-[#71E3DB]',
+  64: 'bg-[#4A90E2] border-[#6BA8F0]',
+  128: 'bg-[#9B59B6] border-[#B67BCE]',
+  256: 'bg-[#E74C3C] border-[#F06C60]',
+  512: 'bg-[#E91E63] border-[#F44777]',
+  1024: 'bg-[#9C27B0] border-[#BA68C8]',
+  2048: 'bg-[#000000] border-[#FFD700]',
+};
+
 // Initialize the board with random number of 2s placed at random positions
 export const initializeBoard = (): Board => {
   const newBoard: Board = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
@@ -34,6 +49,29 @@ export const initializeBoard = (): Board => {
 
   return newBoard;
 };
+
+// Direction button component
+interface DirectionButtonProps {
+  direction: Direction;
+  onClick: (direction: Direction) => void;
+}
+
+const DIRECTION_ARROWS: Record<Direction, string> = {
+  up: '↑',
+  down: '↓',
+  left: '←',
+  right: '→',
+};
+
+const DirectionButton = ({ direction, onClick }: DirectionButtonProps) => (
+  <button
+    onClick={() => onClick(direction)}
+    className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
+    aria-label={`Move ${direction}`}
+  >
+    {DIRECTION_ARROWS[direction]}
+  </button>
+);
 
 export default function Game() {
   const [board, setBoard] = useState<Board>([]);
@@ -61,32 +99,25 @@ export default function Game() {
   // Keyboard event handler
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent default scrolling behavior for arrow keys
-      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
-        e.preventDefault();
-      }
+      const keyMap: Record<string, Direction> = {
+        'ArrowLeft': 'left',
+        'a': 'left',
+        'A': 'left',
+        'ArrowRight': 'right',
+        'd': 'right',
+        'D': 'right',
+        'ArrowUp': 'up',
+        'w': 'up',
+        'W': 'up',
+        'ArrowDown': 'down',
+        's': 'down',
+        'S': 'down',
+      };
 
-      switch (e.key) {
-        case 'ArrowLeft':
-        case 'a':
-        case 'A':
-          handleMove('left');
-          break;
-        case 'ArrowRight':
-        case 'd':
-        case 'D':
-          handleMove('right');
-          break;
-        case 'ArrowUp':
-        case 'w':
-        case 'W':
-          handleMove('up');
-          break;
-        case 'ArrowDown':
-        case 's':
-        case 'S':
-          handleMove('down');
-          break;
+      const direction = keyMap[e.key];
+      if (direction) {
+        e.preventDefault();
+        handleMove(direction);
       }
     };
 
@@ -95,24 +126,9 @@ export default function Game() {
   }, [handleMove]);
 
   // Get color for tile based on value
-  const getTileColor = (value: number | null) => {
+  const getTileColor = (value: number | null): string => {
     if (!value) return '';
-
-    const colors: Record<number, string> = {
-      2: 'bg-[#FF6B35] border-[#FF8C42]',
-      4: 'bg-[#F7931E] border-[#FFB142]',
-      8: 'bg-[#FDC500] border-[#FFD93D]',
-      16: 'bg-[#6BCF7F] border-[#8FE3A0]',
-      32: 'bg-[#4ECDC4] border-[#71E3DB]',
-      64: 'bg-[#4A90E2] border-[#6BA8F0]',
-      128: 'bg-[#9B59B6] border-[#B67BCE]',
-      256: 'bg-[#E74C3C] border-[#F06C60]',
-      512: 'bg-[#E91E63] border-[#F44777]',
-      1024: 'bg-[#9C27B0] border-[#BA68C8]',
-      2048: 'bg-[#000000] border-[#FFD700]',
-    };
-
-    return colors[value] || 'bg-[#34495E] border-[#95A5A6]';
+    return TILE_COLORS[value] || 'bg-[#34495E] border-[#95A5A6]';
   };
 
   return (
@@ -186,37 +202,11 @@ export default function Game() {
 
         {/* Control Buttons */}
         <div className="flex flex-col items-center gap-3">
+          <DirectionButton direction="up" onClick={handleMove} />
           <div className="flex gap-3">
-            <button
-              onClick={() => handleMove('up')}
-              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
-              aria-label="Move up"
-            >
-              ↑
-            </button>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleMove('left')}
-              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
-              aria-label="Move left"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => handleMove('down')}
-              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
-              aria-label="Move down"
-            >
-              ↓
-            </button>
-            <button
-              onClick={() => handleMove('right')}
-              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
-              aria-label="Move right"
-            >
-              →
-            </button>
+            <DirectionButton direction="left" onClick={handleMove} />
+            <DirectionButton direction="down" onClick={handleMove} />
+            <DirectionButton direction="right" onClick={handleMove} />
           </div>
         </div>
       </div>
