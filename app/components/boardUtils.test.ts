@@ -8,6 +8,8 @@ import {
   moveDown,
   move,
   addRandomTile,
+  hasWon,
+  hasLost,
 } from './boardUtils';
 import { Board, Cell } from './Game';
 
@@ -411,6 +413,131 @@ describe('Board Utils', () => {
       expect(newBoard).not.toBeNull();
       expect(newBoard![3][2]).not.toBeNull();
       expect([2, 4]).toContain(newBoard![3][2]);
+    });
+  });
+
+  describe('hasWon', () => {
+    it('should return true when 2048 tile exists', () => {
+      const board: Board = [
+        [4, null, null, 2],
+        [2048, null, null, null],
+        [4, 2, null, null],
+        [4, null, null, null],
+      ];
+
+      expect(hasWon(board)).toBe(true);
+    });
+
+    it('should return false when no 2048 tile exists', () => {
+      const board: Board = [
+        [4, 1024, 512, 2],
+        [256, 128, 64, 32],
+        [16, 8, 4, 2],
+        [4, 2, null, null],
+      ];
+
+      expect(hasWon(board)).toBe(false);
+    });
+
+    it('should return false for empty board', () => {
+      const board: Board = [
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      expect(hasWon(board)).toBe(false);
+    });
+
+    it('should return true when multiple 2048 tiles exist', () => {
+      const board: Board = [
+        [2048, null, null, 2],
+        [4, 2048, null, null],
+        [4, 2, null, null],
+        [4, null, null, null],
+      ];
+
+      expect(hasWon(board)).toBe(true);
+    });
+  });
+
+  describe('hasLost', () => {
+    it('should return true when board is full and no merges possible', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+      ];
+
+      expect(hasLost(board)).toBe(true);
+    });
+
+    it('should return false when board has empty cells', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 4, 2, null],
+        [4, 2, 4, 2],
+      ];
+
+      expect(hasLost(board)).toBe(false);
+    });
+
+    it('should return false when horizontal merge is possible', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 4, 4, 8],
+        [4, 2, 8, 2],
+      ];
+
+      expect(hasLost(board)).toBe(false);
+    });
+
+    it('should return false when vertical merge is possible', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 2, 8, 4],
+        [4, 8, 16, 2],
+      ];
+
+      expect(hasLost(board)).toBe(false);
+    });
+
+    it('should return false for empty board', () => {
+      const board: Board = [
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      expect(hasLost(board)).toBe(false);
+    });
+
+    it('should handle board with merges in corner', () => {
+      const board: Board = [
+        [2, 4, 8, 16],
+        [4, 8, 16, 32],
+        [8, 16, 32, 64],
+        [16, 32, 64, 64],
+      ];
+
+      expect(hasLost(board)).toBe(false);
+    });
+
+    it('should handle board with merges at edges', () => {
+      const board: Board = [
+        [2, 4, 8, 16],
+        [2, 8, 16, 32],
+        [4, 16, 32, 64],
+        [8, 32, 64, 128],
+      ];
+
+      expect(hasLost(board)).toBe(false);
     });
   });
 });

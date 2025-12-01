@@ -185,3 +185,69 @@ export const move = (board: Board, direction: 'left' | 'right' | 'up' | 'down'):
       return { newBoard: board, changed: false };
   }
 };
+
+/**
+ * Checks if the game is won (2048 tile exists on the board)
+ */
+export const hasWon = (board: Board): boolean => {
+  for (let row = 0; row < BOARD_ROWS; row++) {
+    for (let col = 0; col < BOARD_COLS; col++) {
+      if (board[row][col] === 2048) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+/**
+ * Checks if the board is full (no empty cells)
+ */
+const isBoardFull = (board: Board): boolean => {
+  for (let row = 0; row < BOARD_ROWS; row++) {
+    for (let col = 0; col < BOARD_COLS; col++) {
+      if (board[row][col] === null) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
+
+/**
+ * Checks if any adjacent tiles can merge
+ */
+const hasAdjacentMerge = (board: Board): boolean => {
+  // Check horizontal adjacents
+  for (let row = 0; row < BOARD_ROWS; row++) {
+    for (let col = 0; col < BOARD_COLS - 1; col++) {
+      if (board[row][col] !== null && board[row][col] === board[row][col + 1]) {
+        return true;
+      }
+    }
+  }
+
+  // Check vertical adjacents
+  for (let col = 0; col < BOARD_COLS; col++) {
+    for (let row = 0; row < BOARD_ROWS - 1; row++) {
+      if (board[row][col] !== null && board[row][col] === board[row + 1][col]) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+/**
+ * Checks if the game is lost (board full and no valid moves)
+ */
+export const hasLost = (board: Board): boolean => {
+  // If board is not full, game is not lost
+  if (!isBoardFull(board)) {
+    return false;
+  }
+
+  // If there are adjacent tiles that can merge, game is not lost
+  return !hasAdjacentMerge(board);
+};

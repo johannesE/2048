@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { move, addRandomTile } from './boardUtils';
+import { move, addRandomTile, hasWon, hasLost } from './boardUtils';
 
 export type Cell = number | null;
 export type Board = Cell[][];
 export type Direction = 'left' | 'right' | 'up' | 'down';
+export type GameStatus = 'playing' | 'won' | 'lost';
 
 export const BOARD_ROWS = 4;
 export const BOARD_COLS = 4;
@@ -75,31 +76,52 @@ const DirectionButton = ({ direction, onClick }: DirectionButtonProps) => (
 
 export default function Game() {
   const [board, setBoard] = useState<Board>([]);
+  const [gameStatus, setGameStatus] = useState<GameStatus>('playing');
+
+  // Initialize or restart the game
+  const initGame = useCallback(() => {
+    setBoard(initializeBoard());
+    setGameStatus('playing');
+  }, []);
 
   useEffect(() => {
     // Initialize board only on client side to avoid hydration mismatch
     // Math.random() produces different values on server vs client
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBoard(initializeBoard());
-  }, []);
+    initGame();
+  }, [initGame]);
 
   // Handle movement in a specific direction
   const handleMove = useCallback((direction: Direction) => {
+    // Prevent moves if game is over
+    if (gameStatus !== 'playing') return;
+
     setBoard((currentBoard) => {
       if (currentBoard.length === 0) return currentBoard;
 
       const { newBoard, changed } = move(currentBoard, direction);
 
-      // Only add a new tile if the board actually changed
       if (changed) {
+        if (hasWon(newBoard)) {
+          setGameStatus('won');
+          return newBoard;
+        }
+
+        // TODO: check if this can be optimized to avoid double copying and returning null for the random tile. We already have the hasLost check
         const boardWithNewTile = addRandomTile(newBoard);
-        // If board is full, addRandomTile returns null, use newBoard instead
-        return boardWithNewTile ?? newBoard;
+        const finalBoard = boardWithNewTile ?? newBoard;
+
+        // Check lose condition after adding new tile
+        if (hasLost(finalBoard)) {
+          setGameStatus('lost');
+        }
+
+        return finalBoard;
       }
 
       return currentBoard;
     });
-  }, []);
+  }, [gameStatus]);
 
   // Keyboard event handler
   useEffect(() => {
@@ -214,7 +236,48 @@ export default function Game() {
             <DirectionButton direction="right" onClick={handleMove} />
           </div>
         </div>
+
+        {/* Restart Button */}
+        <button
+          onClick={initGame}
+          className="mt-4 px-8 py-3 bg-[#FDC500] text-black font-black text-lg rounded-xl border-4 border-black hover:bg-[#FFD93D] transition-all duration-200 active:scale-95 uppercase tracking-wider"
+        >
+          New Game
+        </button>
       </div>
+
+      {/* Game Over Overlay */}
+      {gameStatus !== 'playing' && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="relative">
+            {/* Background layers for brutalist effect */}
+            <div className="absolute -inset-4 bg-black rotate-2 rounded-3xl"></div>
+            <div className="absolute -inset-3 bg-[#4ECDC4] -rotate-1 rounded-3xl"></div>
+
+            <div className="relative bg-white p-12 rounded-3xl border-8 border-black text-center">
+              <h2 className="text-6xl font-black mb-6 relative">
+                <span className="absolute -inset-2 bg-[#FDC500] -rotate-1 -z-10 rounded-xl"></span>
+                <span className="relative">
+                  {gameStatus === 'won' ? 'You Win!' : 'Game Over'}
+                </span>
+              </h2>
+
+              <p className="text-2xl font-mono mb-8 text-gray-700">
+                {gameStatus === 'won'
+                  ? '🎉 You reached 2048!'
+                  : '😔 No more moves available'}
+              </p>
+
+              <button
+                onClick={initGame}
+                className="px-10 py-4 bg-black text-white font-black text-xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95 uppercase tracking-wider"
+              >
+                Play Again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Custom styles */}
       <style jsx>{`
