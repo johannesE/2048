@@ -24,7 +24,7 @@ describe('Game Component', () => {
       });
     });
 
-    it('should place a random number of tiles (0 to 15)', () => {
+    it('should place a random number of tiles (0 to 16)', () => {
       const board = initializeBoard();
 
       const tileCount = board.flat().filter(cell => cell !== null).length;
@@ -89,7 +89,7 @@ describe('Game Component', () => {
       render(<Game />);
 
       await waitFor(() => {
-        expect(screen.getByText(/Use arrow keys to slide tiles/i)).toBeInTheDocument();
+        expect(screen.getByText(/Use arrow keys or WASD to slide tiles/i)).toBeInTheDocument();
       });
     });
 

@@ -1,9 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { move } from './boardUtils';
 
 export type Cell = number | null;
 export type Board = Cell[][];
+export type Direction = 'left' | 'right' | 'up' | 'down';
 
 export const BOARD_ROWS = 4;
 export const BOARD_COLS = 4;
@@ -18,7 +20,7 @@ export const initializeBoard = (): Board => {
       availablePositions.push([row, col]);
     }
   }
-  const tilesToPlace = Math.floor(Math.random() * availablePositions.length);
+  const tilesToPlace = Math.floor(Math.random() * (availablePositions.length + 1));
 
   // Randomly place the initial 2s
   for (let i = 0; i < tilesToPlace; i++) {
@@ -42,6 +44,55 @@ export default function Game() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBoard(initializeBoard());
   }, []);
+
+  // Handle movement in a specific direction
+  const handleMove = useCallback((direction: Direction) => {
+    setBoard((currentBoard) => {
+      if (currentBoard.length === 0) return currentBoard;
+
+      const { newBoard, changed } = move(currentBoard, direction);
+      if (changed) {
+        return newBoard;
+      }
+      return currentBoard;
+    });
+  }, []);
+
+  // Keyboard event handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent default scrolling behavior for arrow keys
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
+        e.preventDefault();
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          handleMove('left');
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          handleMove('right');
+          break;
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          handleMove('up');
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          handleMove('down');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleMove]);
 
   // Get color for tile based on value
   const getTileColor = (value: number | null) => {
@@ -129,8 +180,44 @@ export default function Game() {
         {/* Instructions */}
         <div className="text-center max-w-md">
           <p className="text-lg font-mono text-gray-600 leading-relaxed">
-            Use arrow keys to slide tiles. Combine matching numbers to create larger values!
+            Use arrow keys or WASD to slide tiles. Combine matching numbers to create larger values!
           </p>
+        </div>
+
+        {/* Control Buttons */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleMove('up')}
+              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
+              aria-label="Move up"
+            >
+              ↑
+            </button>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleMove('left')}
+              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
+              aria-label="Move left"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => handleMove('down')}
+              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
+              aria-label="Move down"
+            >
+              ↓
+            </button>
+            <button
+              onClick={() => handleMove('right')}
+              className="w-16 h-16 bg-black text-white font-black text-2xl rounded-xl border-4 border-[#4ECDC4] hover:bg-[#4ECDC4] hover:text-black transition-all duration-200 active:scale-95"
+              aria-label="Move right"
+            >
+              →
+            </button>
+          </div>
         </div>
       </div>
 
