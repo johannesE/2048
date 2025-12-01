@@ -27,9 +27,8 @@ export const addRandomTile = (board: Board): Board | null => {
 
   // Create a copy of the board
   const newBoard = board.map(row => [...row]);
-
-  // Choose a random empty position and add a 2 or 4
-  const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+  // populate with 1 to 16 tiles of 2 or 4
+  const randomIndex = Math.ceil(Math.random() * emptyPositions.length -1);
   const [row, col] = emptyPositions[randomIndex];
   newBoard[row][col] = Math.random() < 0.5 ? 2 : 4;
   return newBoard;

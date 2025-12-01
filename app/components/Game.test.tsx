@@ -24,11 +24,11 @@ describe('Game Component', () => {
       });
     });
 
-    it('should place a random number of tiles (0 to 16)', () => {
+    it('should place a random number of tiles (1 to 16)', () => {
       const board = initializeBoard();
 
       const tileCount = board.flat().filter(cell => cell !== null).length;
-      expect(tileCount).toBeGreaterThanOrEqual(0);
+      expect(tileCount).toBeGreaterThanOrEqual(1);
       expect(tileCount).toBeLessThanOrEqual(16);
     });
 
