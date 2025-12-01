@@ -6,6 +6,36 @@ export interface MoveResult {
 }
 
 /**
+ * Adds a random tile (2 or 4) to a random empty cell on the board
+ * Returns null if there are no empty cells
+ */
+export const addRandomTile = (board: Board): Board | null => {
+  // Find all empty positions
+  const emptyPositions: [number, number][] = [];
+  for (let row = 0; row < BOARD_ROWS; row++) {
+    for (let col = 0; col < BOARD_COLS; col++) {
+      if (board[row][col] === null) {
+        emptyPositions.push([row, col]);
+      }
+    }
+  }
+
+  // If no empty positions, return null
+  if (emptyPositions.length === 0) {
+    return null;
+  }
+
+  // Create a copy of the board
+  const newBoard = board.map(row => [...row]);
+
+  // Choose a random empty position and add a 2 or 4
+  const randomIndex = Math.floor(Math.random() * emptyPositions.length);
+  const [row, col] = emptyPositions[randomIndex];
+  newBoard[row][col] = Math.random() < 0.5 ? 2 : 4;
+  return newBoard;
+};
+
+/**
  * Slides and merges a single row to the left
  * Each tile can only merge ONCE per move
  */

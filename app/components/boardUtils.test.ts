@@ -7,6 +7,7 @@ import {
   moveUp,
   moveDown,
   move,
+  addRandomTile,
 } from './boardUtils';
 import { Board, Cell } from './Game';
 
@@ -304,6 +305,112 @@ describe('Board Utils', () => {
       const { row: result, changed } = slideRowLeft(row);
       expect(result).toEqual([2, null, null, null]);
       expect(changed).toBe(true);
+    });
+  });
+
+  describe('addRandomTile', () => {
+    it('should add a tile (2 or 4) to an empty cell', () => {
+      const board: Board = [
+        [2, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      const newBoard = addRandomTile(board);
+      expect(newBoard).not.toBeNull();
+
+      // Count tiles
+      const originalCount = board.flat().filter(c => c !== null).length;
+      const newCount = newBoard!.flat().filter(c => c !== null).length;
+      expect(newCount).toBe(originalCount + 1);
+    });
+
+    it('should only add 2 or 4', () => {
+      const board: Board = [
+        [2, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      // Test multiple times to check randomness
+      for (let i = 0; i < 20; i++) {
+        const newBoard = addRandomTile(board);
+        const allTiles = newBoard!.flat().filter(c => c !== null);
+        allTiles.forEach(tile => {
+          expect([2, 4]).toContain(tile);
+        });
+      }
+    });
+
+    it('should return null when board is full', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+      ];
+
+      const newBoard = addRandomTile(board);
+      expect(newBoard).toBeNull();
+    });
+
+    it('should not modify the original board', () => {
+      const board: Board = [
+        [2, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      const originalCopy = board.map(row => [...row]);
+      addRandomTile(board);
+
+      // Original board should be unchanged
+      expect(board).toEqual(originalCopy);
+    });
+
+    it('should place tile at a random empty position', () => {
+      const board: Board = [
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+        [null, null, null, null],
+      ];
+
+      const positions = new Set<string>();
+
+      // Run multiple times to test randomness
+      for (let i = 0; i < 30; i++) {
+        const newBoard = addRandomTile(board);
+
+        // Find the position of the new tile
+        for (let row = 0; row < 4; row++) {
+          for (let col = 0; col < 4; col++) {
+            if (newBoard![row][col] !== null) {
+              positions.add(`${row},${col}`);
+            }
+          }
+        }
+      }
+
+      // Should have placed tiles in multiple different positions
+      expect(positions.size).toBeGreaterThan(5);
+    });
+
+    it('should work with only one empty cell', () => {
+      const board: Board = [
+        [2, 4, 2, 4],
+        [4, 2, 4, 2],
+        [2, 4, 2, 4],
+        [4, 2, null, 2],
+      ];
+
+      const newBoard = addRandomTile(board);
+      expect(newBoard).not.toBeNull();
+      expect(newBoard![3][2]).not.toBeNull();
+      expect([2, 4]).toContain(newBoard![3][2]);
     });
   });
 });

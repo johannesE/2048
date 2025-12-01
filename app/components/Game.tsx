@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { move } from './boardUtils';
+import { move, addRandomTile } from './boardUtils';
 
 export type Cell = number | null;
 export type Board = Cell[][];
@@ -89,9 +89,14 @@ export default function Game() {
       if (currentBoard.length === 0) return currentBoard;
 
       const { newBoard, changed } = move(currentBoard, direction);
+
+      // Only add a new tile if the board actually changed
       if (changed) {
-        return newBoard;
+        const boardWithNewTile = addRandomTile(newBoard);
+        // If board is full, addRandomTile returns null, use newBoard instead
+        return boardWithNewTile ?? newBoard;
       }
+
       return currentBoard;
     });
   }, []);
