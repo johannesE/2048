@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react';
 
-type Cell = number | null;
-type Board = Cell[][];
+export type Cell = number | null;
+export type Board = Cell[][];
 
-const BOARD_ROWS = 4;
-const BOARD_COLS = 4;
+export const BOARD_ROWS = 4;
+export const BOARD_COLS = 4;
 
 // Initialize the board with random number of 2s placed at random positions
-const initializeBoard = (): Board => {
+export const initializeBoard = (): Board => {
   const newBoard: Board = Array(BOARD_ROWS).fill(null).map(() => Array(BOARD_COLS).fill(null));
 
   const availablePositions: [number, number][] = [];
